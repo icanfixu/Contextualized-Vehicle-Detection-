@@ -1,8 +1,11 @@
-# Backend readme
+# Backend Readme
 This readme file is about configure the backend
 ### Info:
 - This project uses python 3.14.3
 - See python version: ```python --version``` or ```python3 --version```
+
+### Dependencies (Or check the requirements.txt)
+- fastapi==0.135.3
 
 
 # Setup info
