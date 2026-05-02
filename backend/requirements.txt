@@ -1,1 +1,2 @@
 fastapi==0.135.3
+unicorn[standard]==2.1.4
