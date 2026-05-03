@@ -99,7 +99,7 @@ After downloading, place the files (e.g., `best.pt`) in the project root directo
 5. Run:
    python main.py
 
-- Dataset: Bangladeshi traffic (CSE499A)  
+- Dataset: Bangladeshi traffic Detection System
 - mAP50: 72.8%  
 - Classes: 11  
 - Epochs: 120  
