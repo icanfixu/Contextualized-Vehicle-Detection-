@@ -100,6 +100,6 @@ After downloading, place the files (e.g., `best.pt`) in the project root directo
    python main.py
 
 - Dataset: Bangladeshi traffic (CSE499A)  
-- mAP50: 52.4%  
+- mAP50: 72.8%  
 - Classes: 11  
-- Epochs: 49  
+- Epochs: 120  
