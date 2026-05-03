@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TrafficAI — History</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a0e1a;--card:#111827;--card2:#161f30;--border:rgba(255,255,255,0.07);--accent:#00e5a0;--text:#f1f5f9;--muted:#64748b;--sw:240px}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex}
+.sidebar{width:var(--sw);background:var(--card);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:28px 0;position:fixed;top:0;left:0;bottom:0;z-index:100}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--accent);padding:0 24px 32px;border-bottom:1px solid var(--border);margin-bottom:24px}
+.logo span{color:var(--text)}
+.nav-item{display:flex;align-items:center;gap:12px;padding:12px 24px;font-size:14px;font-weight:500;color:var(--muted);text-decoration:none;transition:color .15s,background .15s}
+.nav-item:hover{color:var(--text);background:rgba(255,255,255,0.04)}
+.nav-item.active{color:var(--accent);background:rgba(0,229,160,0.08);border-right:2px solid var(--accent)}
+.sidebar-bottom{margin-top:auto;padding:20px 24px 0;border-top:1px solid var(--border)}
+.user-chip{display:flex;align-items:center;gap:10px}
+.avatar{width:36px;height:36px;border-radius:50%;background:rgba(0,229,160,0.15);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;color:var(--accent);font-size:14px;flex-shrink:0}
+.user-info{flex:1;overflow:hidden}
+.user-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-email{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.logout-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;padding:4px}
+.main{margin-left:var(--sw);flex:1;padding:40px}
+.page-title{font-family:'Syne',sans-serif;font-size:28px;font-weight:700;margin-bottom:6px}
+.page-sub{color:var(--muted);font-size:14px;margin-bottom:32px}
+.table-wrap{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+table{width:100%;border-collapse:collapse}
+th{padding:12px 16px;text-align:left;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);font-weight:500}
+td{padding:12px 16px;font-size:13px;border-bottom:1px solid rgba(255,255,255,0.04);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,0.02)}
+.thumb{width:56px;height:40px;border-radius:6px;object-fit:cover;background:var(--card2)}
+.cong-badge{font-size:11px;padding:3px 9px;border-radius:99px;font-weight:600}
+.class-pills{display:flex;flex-wrap:wrap;gap:4px}
+.class-pill{background:var(--card2);border:1px solid var(--border);border-radius:5px;padding:2px 8px;font-size:11px}
+.action-btns{display:flex;gap:6px;align-items:center}
+.dl-btn{background:rgba(0,229,160,0.12);color:var(--accent);border:1px solid rgba(0,229,160,0.3);border-radius:6px;padding:5px 10px;font-size:12px;font-weight:600;text-decoration:none;cursor:pointer;font-family:'Syne',sans-serif}
+.del-btn{background:rgba(228,75,74,0.1);color:#E24B4A;border:1px solid rgba(228,75,74,0.3);border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif}
+.del-btn:hover{background:rgba(228,75,74,0.2)}
+.empty-state{text-align:center;padding:60px 20px;color:var(--muted)}
+.cta-btn{display:inline-block;background:var(--accent);color:#0a0e1a;border:none;border-radius:8px;padding:10px 20px;font-size:13px;font-weight:600;font-family:'Syne',sans-serif;cursor:pointer;text-decoration:none;margin-top:12px}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="logo">Traffic<span>AI</span></div>
+  <a class="nav-item" href="/dashboard">📊 Dashboard</a>
+  <a class="nav-item" href="/detect">🔍 Detect</a>
+  <a class="nav-item active" href="/history">🕓 History</a>
+  <a class="nav-item" href="/performance">📈 Performance</a>
+  <div class="sidebar-bottom">
+    <div class="user-chip">
+      <div class="avatar" id="avatar">?</div>
+      <div class="user-info">
+        <div class="user-name" id="user-name">Loading...</div>
+        <div class="user-email" id="user-email"></div>
+      </div>
+      <button class="logout-btn" onclick="logout()">↩</button>
+    </div>
+  </div>
+</aside>
+<main class="main">
+  <h1 class="page-title">Detection History</h1>
+  <p class="page-sub">All your previous scans — download result images or delete old records.</p>
+  <div id="content"><p style="color:var(--muted);padding:20px 0">Loading...</p></div>
+</main>
+<script>
+  const token = localStorage.getItem('token');
+  if (!token) window.location.href = '/';
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  if (user.name) {
+    document.getElementById('user-name').textContent = user.name;
+    document.getElementById('user-email').textContent = user.email;
+    document.getElementById('avatar').textContent = user.name.charAt(0).toUpperCase();
+  }
+
+  const cc = { Low:'#639922', Moderate:'#BA7517', High:'#D85A30', Severe:'#E24B4A' };
+
+  async function loadHistory() {
+    const res = await fetch('/api/history', { headers: { 'Authorization': `Bearer ${token}` } });
+    if (res.status === 401) { logout(); return; }
+    const data = await res.json();
+    const container = document.getElementById('content');
+
+    if (!data.detections.length) {
+      container.innerHTML = `<div class="empty-state"><p>No detections yet.</p><a class="cta-btn" href="/detect">Start detecting</a></div>`;
+      return;
+    }
+
+    container.innerHTML = `
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Image</th>
+              <th>Objects</th>
+              <th>Classes detected</th>
+              <th>Congestion</th>
+              <th>Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${data.detections.map(d => `
+              <tr id="row-${d.id}">
+                <td><img class="thumb" src="${d.result_image}" onerror="this.style.background='#1e2a3a'"></td>
+                <td><strong>${d.total_objects}</strong></td>
+                <td>
+                  <div class="class-pills">
+                    ${Object.entries(d.class_counts).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([cls,cnt]) =>
+                      `<span class="class-pill">${cls} ×${cnt}</span>`).join('')}
+                  </div>
+                </td>
+                <td>
+                  <span class="cong-badge" style="background:${cc[d.congestion_level]||'#888'}22;color:${cc[d.congestion_level]||'#888'}">
+                    ${d.congestion_level} (${d.congestion_score})
+                  </span>
+                </td>
+                <td style="color:var(--muted)">${d.created_at}</td>
+                <td>
+                  <div class="action-btns">
+                    <a class="dl-btn" href="${d.result_image}" download="detection_${d.id}.jpg">Download</a>
+                    <button class="del-btn" onclick="deleteRecord(${d.id})">Delete</button>
+                  </div>
+                </td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  }
+
+  async function deleteRecord(id) {
+    if (!confirm('Delete this detection?')) return;
+    const res = await fetch(`/api/history/${id}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (res.ok) {
+      const row = document.getElementById(`row-${id}`);
+      if (row) row.remove();
+    }
+  }
+
+  function logout() { localStorage.clear(); window.location.href = '/'; }
+  loadHistory();
+</script>
+</body>
+</html>

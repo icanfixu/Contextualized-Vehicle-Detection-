@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TrafficAI — Detect</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a0e1a;--card:#111827;--card2:#161f30;--border:rgba(255,255,255,0.07);--accent:#00e5a0;--text:#f1f5f9;--muted:#64748b;--sw:240px}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex}
+.sidebar{width:var(--sw);background:var(--card);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:28px 0;position:fixed;top:0;left:0;bottom:0;z-index:100}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--accent);padding:0 24px 32px;border-bottom:1px solid var(--border);margin-bottom:24px}
+.logo span{color:var(--text)}
+.nav-item{display:flex;align-items:center;gap:12px;padding:12px 24px;font-size:14px;font-weight:500;color:var(--muted);text-decoration:none;transition:color .15s,background .15s}
+.nav-item:hover{color:var(--text);background:rgba(255,255,255,0.04)}
+.nav-item.active{color:var(--accent);background:rgba(0,229,160,0.08);border-right:2px solid var(--accent)}
+.sidebar-bottom{margin-top:auto;padding:20px 24px 0;border-top:1px solid var(--border)}
+.user-chip{display:flex;align-items:center;gap:10px}
+.avatar{width:36px;height:36px;border-radius:50%;background:rgba(0,229,160,0.15);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;color:var(--accent);font-size:14px;flex-shrink:0}
+.user-info{flex:1;overflow:hidden}
+.user-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-email{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.logout-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;padding:4px}
+.main{margin-left:var(--sw);flex:1;padding:40px}
+.page-title{font-family:'Syne',sans-serif;font-size:28px;font-weight:700;margin-bottom:6px}
+.page-sub{color:var(--muted);font-size:14px;margin-bottom:32px}
+.upload-zone{border:2px dashed var(--border);border-radius:16px;padding:50px 40px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;background:var(--card);margin-bottom:24px}
+.upload-zone:hover,.upload-zone.dragover{border-color:var(--accent);background:rgba(0,229,160,0.04)}
+.upload-icon{font-size:40px;margin-bottom:14px}
+.upload-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;margin-bottom:6px}
+.upload-sub{color:var(--muted);font-size:13px;margin-bottom:20px}
+
+/* Feature 3: Confidence slider */
+.conf-row{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:20px}
+.conf-label{font-size:13px;color:var(--muted);flex-shrink:0;width:130px}
+.conf-slider{flex:1;accent-color:var(--accent)}
+.conf-value{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--accent);width:36px;text-align:right}
+.conf-hint{font-size:11px;color:var(--muted);margin-top:4px}
+
+.upload-btn{background:var(--accent);color:#0a0e1a;border:none;border-radius:8px;padding:11px 28px;font-size:14px;font-weight:600;font-family:'Syne',sans-serif;cursor:pointer}
+#file-input{display:none}
+.processing{display:none;text-align:center;padding:40px}
+.processing.visible{display:block}
+.spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.processing-text{color:var(--muted);font-size:14px}
+.processing-text strong{color:var(--accent);font-family:'Syne',sans-serif}
+.preview-section{display:none}
+.preview-section.visible{display:block}
+.preview-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.preview-card{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.preview-card-title{padding:12px 14px;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border)}
+.preview-img{width:100%;max-height:320px;object-fit:contain;background:var(--card2);display:block}
+.results-panel{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px}
+
+/* Feature 2: Congestion score */
+.congestion-row{display:flex;align-items:center;gap:16px;margin-bottom:18px;padding:14px 16px;border-radius:10px;border:1px solid var(--border)}
+.cong-score-big{font-family:'Syne',sans-serif;font-size:36px;font-weight:700}
+.cong-info{}
+.cong-level{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:2px}
+.cong-desc{font-size:12px;color:var(--muted)}
+.cong-bar-bg{flex:1;height:8px;background:var(--border);border-radius:4px;overflow:hidden}
+.cong-bar-fill{height:100%;border-radius:4px;transition:width .5s}
+
+.results-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.badge{background:rgba(0,229,160,0.15);color:var(--accent);border-radius:99px;padding:2px 10px;font-size:12px;font-weight:600}
+.class-tags{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.class-tag{background:var(--card2);border:1px solid var(--border);border-radius:7px;padding:6px 12px;font-size:12px;display:flex;align-items:center;gap:7px}
+.class-tag-count{background:var(--accent);color:#0a0e1a;border-radius:99px;padding:1px 7px;font-size:11px;font-weight:700;font-family:'Syne',sans-serif}
+.reset-btn{background:transparent;border:1px solid var(--border);color:var(--text);border-radius:8px;padding:10px 22px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif}
+.reset-btn:hover{border-color:var(--accent);color:var(--accent)}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="logo">Traffic<span>AI</span></div>
+  <a class="nav-item" href="/dashboard">📊 Dashboard</a>
+  <a class="nav-item active" href="/detect">🔍 Detect</a>
+  <a class="nav-item" href="/history">🕓 History</a>
+  <a class="nav-item" href="/performance">📈 Performance</a>
+  <div class="sidebar-bottom">
+    <div class="user-chip">
+      <div class="avatar" id="avatar">?</div>
+      <div class="user-info">
+        <div class="user-name" id="user-name">Loading...</div>
+        <div class="user-email" id="user-email"></div>
+      </div>
+      <button class="logout-btn" onclick="logout()">↩</button>
+    </div>
+  </div>
+</aside>
+<main class="main">
+  <h1 class="page-title">Detect Objects</h1>
+  <p class="page-sub">Upload a traffic image — YOLOv8 detects vehicles and pedestrians instantly.</p>
+
+  <div class="upload-zone" id="upload-zone"
+       ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)"
+       onclick="document.getElementById('file-input').click()">
+    <div class="upload-icon">📷</div>
+    <div class="upload-title">Drop your image here</div>
+    <div class="upload-sub">JPG, PNG, WEBP — max 16MB</div>
+    <button class="upload-btn" onclick="event.stopPropagation();document.getElementById('file-input').click()">Choose image</button>
+    <input type="file" id="file-input" accept="image/*" onchange="handleFileSelect(event)">
+  </div>
+
+  <!-- Feature 3: Confidence slider -->
+  <div class="conf-row">
+    <span class="conf-label">Confidence threshold</span>
+    <input type="range" class="conf-slider" id="conf-slider" min="0.10" max="0.90" step="0.05" value="0.25"
+           oninput="document.getElementById('conf-val').textContent=parseFloat(this.value).toFixed(2)">
+    <span class="conf-value" id="conf-val">0.25</span>
+  </div>
+  <p class="conf-hint" style="color:var(--muted);font-size:12px;margin-top:-14px;margin-bottom:20px;padding-left:4px">
+    Lower = detect more (may include false positives) · Higher = detect less (only confident boxes)
+  </p>
+
+  <div class="processing" id="processing">
+    <div class="spinner"></div>
+    <div class="processing-text">Running <strong>YOLOv8</strong> detection...</div>
+  </div>
+
+  <div class="preview-section" id="preview-section">
+    <div class="preview-grid">
+      <div class="preview-card">
+        <div class="preview-card-title">Original image</div>
+        <img class="preview-img" id="original-img" src="" alt="Original">
+      </div>
+      <div class="preview-card">
+        <div class="preview-card-title">Detection result</div>
+        <img class="preview-img" id="result-img" src="" alt="Result">
+      </div>
+    </div>
+
+    <div class="results-panel">
+      <!-- Feature 2: Congestion score -->
+      <div class="congestion-row" id="cong-row">
+        <div>
+          <div class="cong-score-big" id="cong-score">0</div>
+          <div style="font-size:11px;color:var(--muted)">/ 100</div>
+        </div>
+        <div class="cong-info" style="flex:1">
+          <div class="cong-level" id="cong-level">—</div>
+          <div class="cong-desc">Congestion level</div>
+          <div style="margin-top:8px">
+            <div class="cong-bar-bg"><div class="cong-bar-fill" id="cong-bar" style="width:0%"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="results-title">Detected objects <span class="badge" id="total-badge">0</span></div>
+      <div class="class-tags" id="class-tags"></div>
+      <button class="reset-btn" onclick="resetDetection()">Detect another image</button>
+      <a id="download-btn" style="margin-left:10px;display:inline-block;background:var(--accent);color:#0a0e1a;border-radius:8px;padding:10px 22px;font-size:13px;font-weight:600;text-decoration:none;font-family:'Syne',sans-serif" download>Download result</a>
+    </div>
+  </div>
+</main>
+<script>
+  const token = localStorage.getItem('token');
+  if (!token) window.location.href = '/';
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  if (user.name) {
+    document.getElementById('user-name').textContent = user.name;
+    document.getElementById('user-email').textContent = user.email;
+    document.getElementById('avatar').textContent = user.name.charAt(0).toUpperCase();
+  }
+
+  function handleDragOver(e) { e.preventDefault(); document.getElementById('upload-zone').classList.add('dragover'); }
+  function handleDragLeave() { document.getElementById('upload-zone').classList.remove('dragover'); }
+  function handleDrop(e) { e.preventDefault(); document.getElementById('upload-zone').classList.remove('dragover'); const f = e.dataTransfer.files[0]; if (f && f.type.startsWith('image/')) runDetection(f); }
+  function handleFileSelect(e) { const f = e.target.files[0]; if (f) runDetection(f); }
+
+  async function runDetection(file) {
+    const reader = new FileReader();
+    reader.onload = e => document.getElementById('original-img').src = e.target.result;
+    reader.readAsDataURL(file);
+
+    document.getElementById('upload-zone').style.display = 'none';
+    document.getElementById('processing').classList.add('visible');
+    document.getElementById('preview-section').classList.remove('visible');
+
+    const conf = document.getElementById('conf-slider').value;
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('conf', conf);
+
+    try {
+      const res = await fetch('/api/detect', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData
+      });
+      if (res.status === 401) { logout(); return; }
+      const data = await res.json();
+
+      document.getElementById('result-img').src = data.result_image + '?t=' + Date.now();
+      document.getElementById('total-badge').textContent = data.total_objects;
+
+      // Feature 2: Show congestion score
+      const cong = data.congestion;
+      document.getElementById('cong-score').textContent = cong.score;
+      document.getElementById('cong-level').textContent = cong.level;
+      document.getElementById('cong-level').style.color = cong.color;
+      document.getElementById('cong-score').style.color = cong.color;
+      document.getElementById('cong-bar').style.width = cong.score + '%';
+      document.getElementById('cong-bar').style.background = cong.color;
+
+      // Feature 4: Download button
+      document.getElementById('download-btn').href = data.result_image;
+
+      const tagsEl = document.getElementById('class-tags');
+      const counts = data.class_counts;
+      if (!Object.keys(counts).length) {
+        tagsEl.innerHTML = '<div style="color:var(--muted);font-size:13px">No objects detected. Try a clearer image or lower the confidence threshold.</div>';
+      } else {
+        tagsEl.innerHTML = Object.entries(counts).sort((a,b)=>b[1]-a[1]).map(([cls,count]) => `
+          <div class="class-tag">${cls}<span class="class-tag-count">${count}</span></div>`).join('');
+      }
+
+      document.getElementById('processing').classList.remove('visible');
+      document.getElementById('preview-section').classList.add('visible');
+    } catch(e) {
+      alert('Detection failed. Please try again.');
+      resetDetection();
+    }
+  }
+
+  function resetDetection() {
+    document.getElementById('upload-zone').style.display = '';
+    document.getElementById('processing').classList.remove('visible');
+    document.getElementById('preview-section').classList.remove('visible');
+    document.getElementById('file-input').value = '';
+  }
+
+  function logout() { localStorage.clear(); window.location.href = '/'; }
+</script>
+</body>
+</html>

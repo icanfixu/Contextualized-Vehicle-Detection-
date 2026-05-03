@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TrafficAI — Performance</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a0e1a;--card:#111827;--card2:#161f30;--border:rgba(255,255,255,0.07);--accent:#00e5a0;--text:#f1f5f9;--muted:#64748b;--sw:240px}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex}
+.sidebar{width:var(--sw);background:var(--card);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:28px 0;position:fixed;top:0;left:0;bottom:0;z-index:100}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--accent);padding:0 24px 32px;border-bottom:1px solid var(--border);margin-bottom:24px}
+.logo span{color:var(--text)}
+.nav-item{display:flex;align-items:center;gap:12px;padding:12px 24px;font-size:14px;font-weight:500;color:var(--muted);text-decoration:none;transition:color .15s,background .15s}
+.nav-item:hover{color:var(--text);background:rgba(255,255,255,0.04)}
+.nav-item.active{color:var(--accent);background:rgba(0,229,160,0.08);border-right:2px solid var(--accent)}
+.sidebar-bottom{margin-top:auto;padding:20px 24px 0;border-top:1px solid var(--border)}
+.user-chip{display:flex;align-items:center;gap:10px}
+.avatar{width:36px;height:36px;border-radius:50%;background:rgba(0,229,160,0.15);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;color:var(--accent);font-size:14px;flex-shrink:0}
+.user-info{flex:1;overflow:hidden}
+.user-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-email{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.logout-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;padding:4px}
+.main{margin-left:var(--sw);flex:1;padding:40px}
+.page-title{font-family:'Syne',sans-serif;font-size:28px;font-weight:700;margin-bottom:6px}
+.page-sub{color:var(--muted);font-size:14px;margin-bottom:32px}
+.overview-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px}
+.stat-label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.stat-value{font-family:'Syne',sans-serif;font-size:30px;font-weight:700}
+.stat-value.accent{color:var(--accent)}
+.stat-sub{font-size:11px;color:var(--muted);margin-top:4px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px}
+.section-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px}
+.section-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:18px}
+.chart-wrap{position:relative;height:240px}
+.per-class-table{width:100%;border-collapse:collapse}
+.per-class-table th{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;padding:8px 10px;border-bottom:1px solid var(--border);text-align:left;font-weight:500}
+.per-class-table td{font-size:13px;padding:9px 10px;border-bottom:1px solid rgba(255,255,255,0.03)}
+.per-class-table tr:last-child td{border-bottom:none}
+.bar-cell{width:120px}
+.mini-bar-bg{height:6px;background:var(--card2);border-radius:3px;overflow:hidden}
+.mini-bar-fill{height:100%;border-radius:3px;background:var(--accent)}
+.info-row{display:flex;gap:16px;margin-bottom:24px;flex-wrap:wrap}
+.info-chip{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 16px;font-size:13px}
+.info-chip span{color:var(--accent);font-weight:600;font-family:'Syne',sans-serif}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="logo">Traffic<span>AI</span></div>
+  <a class="nav-item" href="/dashboard">📊 Dashboard</a>
+  <a class="nav-item" href="/detect">🔍 Detect</a>
+  <a class="nav-item" href="/history">🕓 History</a>
+  <a class="nav-item active" href="/performance">📈 Performance</a>
+  <div class="sidebar-bottom">
+    <div class="user-chip">
+      <div class="avatar" id="avatar">?</div>
+      <div class="user-info">
+        <div class="user-name" id="user-name">Loading...</div>
+        <div class="user-email" id="user-email"></div>
+      </div>
+      <button class="logout-btn" onclick="logout()">↩</button>
+    </div>
+  </div>
+</aside>
+<main class="main">
+  <h1 class="page-title">Model Performance</h1>
+  <p class="page-sub">YOLOv8s evaluation results on the Bangladeshi traffic validation dataset.</p>
+
+  <div class="info-row">
+    <div class="info-chip">Model: <span id="info-model">—</span></div>
+    <div class="info-chip">Dataset: <span id="info-dataset">—</span></div>
+    <div class="info-chip">Epochs trained: <span id="info-epochs">—</span></div>
+    <div class="info-chip">Classes: <span id="info-classes">—</span></div>
+  </div>
+
+  <div class="overview-grid">
+    <div class="stat-card"><div class="stat-label">mAP50</div><div class="stat-value accent" id="map50">—</div><div class="stat-sub">Mean avg precision @IoU 0.5</div></div>
+    <div class="stat-card"><div class="stat-label">mAP50-95</div><div class="stat-value" id="map5095">—</div><div class="stat-sub">Stricter multi-threshold</div></div>
+    <div class="stat-card"><div class="stat-label">Precision</div><div class="stat-value accent" id="precision">—</div><div class="stat-sub">True positive rate</div></div>
+    <div class="stat-card"><div class="stat-label">Recall</div><div class="stat-value" id="recall">—</div><div class="stat-sub">Detection coverage</div></div>
+  </div>
+
+  <div class="two-col">
+    <div class="section-card">
+      <div class="section-title">Per-class AP50</div>
+      <div class="chart-wrap"><canvas id="ap50Chart"></canvas></div>
+    </div>
+    <div class="section-card">
+      <div class="section-title">Precision vs Recall per class</div>
+      <div class="chart-wrap"><canvas id="prChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="section-card">
+    <div class="section-title">Detailed per-class metrics</div>
+    <table class="per-class-table" id="class-table">
+      <thead><tr><th>Class</th><th>AP50</th><th>Precision</th><th>Recall</th><th>AP50 bar</th></tr></thead>
+      <tbody id="class-tbody"></tbody>
+    </table>
+  </div>
+</main>
+<script>
+  const token = localStorage.getItem('token');
+  if (!token) window.location.href = '/';
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  if (user.name) {
+    document.getElementById('user-name').textContent = user.name;
+    document.getElementById('user-email').textContent = user.email;
+    document.getElementById('avatar').textContent = user.name.charAt(0).toUpperCase();
+  }
+
+  async function loadPerformance() {
+    const res = await fetch('/api/performance', { headers: { 'Authorization': `Bearer ${token}` } });
+    if (res.status === 401) { logout(); return; }
+    const data = await res.json();
+    const o = data.overall;
+
+    document.getElementById('map50').textContent     = (o.mAP50 * 100).toFixed(1) + '%';
+    document.getElementById('map5095').textContent   = (o.mAP50_95 * 100).toFixed(1) + '%';
+    document.getElementById('precision').textContent = (o.precision * 100).toFixed(1) + '%';
+    document.getElementById('recall').textContent    = (o.recall * 100).toFixed(1) + '%';
+    document.getElementById('info-model').textContent   = o.model;
+    document.getElementById('info-dataset').textContent = o.dataset;
+    document.getElementById('info-epochs').textContent  = o.epochs_trained;
+    document.getElementById('info-classes').textContent = o.total_classes;
+
+    const classes = data.per_class.map(c => c.class);
+    const ap50s   = data.per_class.map(c => parseFloat((c.ap50 * 100).toFixed(1)));
+    const precs   = data.per_class.map(c => parseFloat((c.precision * 100).toFixed(1)));
+    const recs    = data.per_class.map(c => parseFloat((c.recall * 100).toFixed(1)));
+
+    const gridColor = 'rgba(255,255,255,0.05)';
+    const tickColor = '#64748b';
+
+    // AP50 bar chart
+    new Chart(document.getElementById('ap50Chart').getContext('2d'), {
+      type: 'bar',
+      data: { labels: classes, datasets: [{
+        label: 'AP50 (%)', data: ap50s,
+        backgroundColor: ap50s.map(v => v >= 50 ? 'rgba(0,229,160,0.7)' : v >= 30 ? 'rgba(0,229,160,0.4)' : 'rgba(0,229,160,0.2)'),
+        borderRadius: 4, borderSkipped: false
+      }]},
+      options: { responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: tickColor, font: { size: 9 } }, grid: { color: gridColor } },
+          y: { min: 0, max: 100, ticks: { color: tickColor, font: { size: 9 }, callback: v => v + '%' }, grid: { color: gridColor } }
+        }
+      }
+    });
+
+    // Precision vs Recall radar/bar
+    new Chart(document.getElementById('prChart').getContext('2d'), {
+      type: 'bar',
+      data: { labels: classes, datasets: [
+        { label: 'Precision', data: precs, backgroundColor: 'rgba(59,130,246,0.6)', borderRadius: 3 },
+        { label: 'Recall',    data: recs,  backgroundColor: 'rgba(0,229,160,0.5)',  borderRadius: 3 }
+      ]},
+      options: { responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { labels: { color: tickColor, font: { size: 11 } } } },
+        scales: {
+          x: { ticks: { color: tickColor, font: { size: 9 } }, grid: { color: gridColor } },
+          y: { min: 0, max: 100, ticks: { color: tickColor, font: { size: 9 }, callback: v => v + '%' }, grid: { color: gridColor } }
+        }
+      }
+    });
+
+    // Per-class table
+    const tbody = document.getElementById('class-tbody');
+    tbody.innerHTML = data.per_class.sort((a,b) => b.ap50 - a.ap50).map(c => `
+      <tr>
+        <td style="font-weight:500">${c.class}</td>
+        <td style="color:var(--accent);font-family:'Syne',sans-serif">${(c.ap50*100).toFixed(1)}%</td>
+        <td>${(c.precision*100).toFixed(1)}%</td>
+        <td>${(c.recall*100).toFixed(1)}%</td>
+        <td class="bar-cell">
+          <div class="mini-bar-bg">
+            <div class="mini-bar-fill" style="width:${(c.ap50*100).toFixed(0)}%;background:${c.ap50>=0.5?'var(--accent)':c.ap50>=0.3?'#BA7517':'#E24B4A'}"></div>
+          </div>
+        </td>
+      </tr>`).join('');
+  }
+
+  function logout() { localStorage.clear(); window.location.href = '/'; }
+  loadPerformance();
+</script>
+</body>
+</html>
