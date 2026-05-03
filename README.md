@@ -78,7 +78,27 @@ python main.py
 | `DATABASE_URL` | PostgreSQL URL | SQLite locally |
 
 ## Model Info
-- Architecture: YOLOv8s  
+- Architecture: YOLOv8s
+
+  ## Model Download
+
+The trained model files are too large to upload to GitHub.
+
+Download them from Google Drive:
+https://drive.google.com/drive/folders/1oxUz_YB3d6OTQUsJSjq9PQ20Ra5wCJsN?usp=sharing
+
+After downloading, place the files (e.g., `best.pt`) in the project root directory before running the application.
+
+## How to Run
+
+1. Clone the repository
+2. Download model from the link above
+3. Place `best.pt` in the project folder
+4. Install requirements:
+   pip install -r requirements.txt
+5. Run:
+   python main.py
+
 - Dataset: Bangladeshi traffic (CSE499A)  
 - mAP50: 52.4%  
 - Classes: 11  
